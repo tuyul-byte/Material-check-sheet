@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Incoming Material Check Sheet</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: #eef3f8; min-height: 100vh; padding: 16px; }
+        
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 32px; padding: 24px; box-shadow: 0 20px 40px -12px rgba(0,20,40,0.25); }
+        
+        /* SPLASH */
+        #splash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0b1e33; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 9999; color: white;
+            transition: opacity 0.8s;
+        }
+        #splash.hidden { opacity: 0; pointer-events: none; }
+        #splash .icon { font-size: 64px; margin-bottom: 20px; animation: float 2.5s ease-in-out infinite; }
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+        #splash h1 { font-size: 28px; margin-bottom: 6px; }
+        #splash p { color: #888; font-size: 15px; margin-bottom: 30px; }
+        #splash .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #4fc3f7; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        #splash .progress { width: 200px; height: 4px; background: #333; border-radius: 4px; overflow: hidden; margin-top: 12px; }
+        #splash .progress-bar { height: 100%; width: 0%; background: #4fc3f7; transition: width 0.5s; }
+        #splash .status { color: #aaa; font-size: 13px; margin-top: 10px; }
+        #splash .version { position: absolute; bottom: 30px; color: #444; font-size: 12px; }
+
+        /* LOGIN */
+        #login {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #0b1e33; display: flex; justify-content: center; align-items: center; z-index: 9998;
+            padding: 20px;
+        }
+        #login.hidden { display: none; }
+        .login-box { background: white; border-radius: 28px; padding: 40px 36px; max-width: 420px; width: 100%; }
+        .login-box .icon { text-align: center; font-size: 48px; margin-bottom: 12px; }
+        .login-box h2 { text-align: center; color: #0b1e33; font-size: 22px; margin-bottom: 4px; }
+        .login-box .subtitle { text-align: center; color: #4a617c; font-size: 14px; margin-bottom: 24px; }
+        .login-box .form-group { margin-bottom: 16px; }
+        .login-box label { display: block; font-size: 13px; font-weight: 600; color: #1d3a5c; margin-bottom: 4px; }
+        .login-box input { width: 100%; padding: 12px 16px; border: 2px solid #d0dcee; border-radius: 12px; font-size: 15px; outline: none; transition: 0.2s; background: #f8fbfe; }
+        .login-box input:focus { border-color: #1a4780; background: white; }
+        .login-btn { width: 100%; padding: 14px; background: #1a4780; color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 8px; }
+        .login-btn:hover { background: #0f3460; }
+        .login-error { color: #d32f2f; font-size: 13px; text-align: center; margin-top: 12px; min-height: 20px; }
+        .login-hint { display: flex; flex-direction: column; gap: 4px; margin-top: 16px; padding: 12px 16px; background: #f5f9ff; border-radius: 12px; border: 1px dashed #d0dcee; }
+        .login-hint .hint-title { font-size: 12px; font-weight: 600; color: #4a617c; text-align: center; }
+        .login-hint .hint-item { display: flex; justify-content: space-between; font-size: 12px; color: #1d3a5c; padding: 2px 0; }
+        .login-hint .hint-item .role-name { font-weight: 600; color: #1a4780; }
+        .login-hint .hint-item .role-user { color: #5a7a98; font-style: italic; }
+
+        /* HEADER */
+        .header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 2px solid #e2eaf3; gap: 10px; }
+        .header h1 { font-size: 22px; font-weight: 600; color: #0b1e33; display: flex; align-items: center; gap: 8px; }
+        .header h1 small { font-size: 13px; font-weight: 400; color: #4a617c; }
+        .user-role-badge { display: flex; align-items: center; gap: 10px; background: #eef3fa; padding: 4px 16px 4px 12px; border-radius: 60px; font-size: 13px; color: #1d3a5c; }
+        .user-role-badge .role-label { font-weight: 600; color: #1a4780; }
+        .user-role-badge .logout-btn { background: none; border: none; color: #b33a3a; cursor: pointer; font-size: 13px; font-weight: 600; padding: 2px 8px; border-radius: 30px; transition: 0.2s; }
+        .user-role-badge .logout-btn:hover { background: #fee8e8; }
+        .badge-date { background: #eef3fa; padding: 6px 16px; border-radius: 60px; font-size: 13px; font-weight: 500; color: #1d3a5c; display: flex; align-items: center; gap: 8px; }
+        .badge-date span { background: #1d3a5c; color: white; padding: 2px 12px; border-radius: 40px; font-size: 12px; }
+
+        /* TOP BAR */
+        .top-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; padding: 8px 14px; background: #f5f9ff; border-radius: 12px; border: 1px solid #e2eaf3; }
+        .user-info { font-size: 13px; color: #4a617c; display: flex; align-items: center; gap: 6px; }
+        .user-info strong { color: #1d3a5c; }
+        .sync-status { font-size: 12px; padding: 3px 12px; border-radius: 30px; display: inline-flex; align-items: center; gap: 5px; }
+        .sync-status.synced { background: #d4f0e0; color: #0a6b3a; }
+        .sync-status.syncing { background: #f7e8d4; color: #8a5a1a; animation: pulse 1s infinite; }
+        .sync-status.error { background: #f7d4d4; color: #8a1a1a; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .btn-sync { background: #1a4780; border: none; color: white; padding: 5px 14px; border-radius: 30px; font-size: 12px; cursor: pointer; }
+        .btn-sync:hover { background: #0f3460; }
+
+        /* SEARCH */
+        .search-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; padding: 10px 14px; background: #f5f9ff; border-radius: 14px; border: 1px solid #e2eaf3; }
+        .search-bar label { font-weight: 600; font-size: 13px; color: #1d3a5c; }
+        .search-input-wrapper { display: flex; flex: 1; min-width: 180px; align-items: center; background: white; border-radius: 40px; border: 2px solid #d0dcee; overflow: hidden; }
+        .search-input-wrapper input { border: none; padding: 8px 14px; font-size: 14px; flex: 1; outline: none; background: transparent; }
+        .search-input-wrapper .search-icon { padding: 0 10px; color: #5a7a98; }
+        .search-clear-btn { background: none; border: none; color: #b0c4db; cursor: pointer; padding: 0 10px; font-size: 16px; display: none; }
+        .search-clear-btn.visible { display: block; }
+        .search-stats { font-size: 12px; color: #4a617c; white-space: nowrap; }
+        .btn-toggle-all { background: #e8eef6; border: none; padding: 5px 14px; border-radius: 30px; font-size: 12px; font-weight: 600; color: #1d3a5c; cursor: pointer; }
+
+        /* CARD */
+        .vertical-list { display: flex; flex-direction: column; gap: 16px; margin-top: 4px; }
+        .item-card { background: #ffffff; border-radius: 18px; border: 1px solid #e4ebf3; padding: 14px 16px 16px; position: relative; transition: 0.15s; }
+        .item-card:hover { background: #fafdff; border-color: #cbd8e8; }
+        .item-card.hidden-card { display: none; }
+        .item-card.filtered-out { display: none; }
+
+        .btn-remove-card { position: absolute; top: 8px; right: 12px; background: #fee8e8; border: none; color: #b33a3a; width: 26px; height: 26px; border-radius: 50%; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-remove-card:hover { background: #fccccc; }
+        .btn-toggle-card { position: absolute; top: 8px; right: 46px; background: #e8eef6; border: none; color: #1d3a5c; width: 26px; height: 26px; border-radius: 50%; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        .item-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; align-items: start; }
+
+        /* LEFT COL */
+        .left-col { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 14px; }
+        .field { display: flex; align-items: baseline; gap: 4px 6px; flex-wrap: wrap; padding: 3px 0; border-bottom: 1px dashed #edf2f8; }
+        .field:last-child { border-bottom: none; }
+        .field-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: #3e5e7c; min-width: 60px; background: #f2f7fd; padding: 1px 8px; border-radius: 30px; display: inline-block; text-align: center; }
+        .field-value { font-size: 14px; font-weight: 500; color: #0f2a45; padding: 2px 0; flex: 1; min-width: 60px; }
+        .field-input { border: none; border-bottom: 2px solid #c8d6e8; background: transparent; padding: 2px 4px; font-size: 14px; font-weight: 500; color: #0f2a45; outline: none; transition: 0.2s; flex: 1; min-width: 50px; width: 100%; }
+        .field-input:focus { border-bottom-color: #1a4780; }
+        .field-input-sm { font-size: 12px; padding: 1px 4px; }
+        .field-select { border: none; border-bottom: 2px solid #c8d6e8; background: transparent; padding: 2px 4px; font-size: 13px; font-weight: 500; color: #0f2a45; outline: none; transition: 0.2s; cursor: pointer; flex: 1; min-width: 50px; width: 100%; }
+        .field-select:focus { border-bottom-color: #1a4780; }
+
+        /* RIGHT COL */
+        .right-col { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; background: #f8fbfe; border-radius: 14px; padding: 10px 12px; border: 1px solid #e8eef6; }
+        .right-section { padding: 0 2px; }
+        .right-section-title { font-weight: 700; font-size: 12px; padding-bottom: 4px; margin-bottom: 4px; border-bottom: 2px solid; display: flex; align-items: center; gap: 4px; }
+        .title-warehouse { color: #1a4780; border-color: #b8cde0; }
+        .title-qc { color: #0f6b4f; border-color: #a8d5c0; }
+        .title-supply { color: #8a5a1a; border-color: #e0c8a8; }
+        .title-keterangan { color: #7a4a8a; border-color: #d0b8e0; }
+
+        .right-field { display: flex; align-items: baseline; gap: 4px 6px; flex-wrap: wrap; padding: 2px 0; border-bottom: 1px dashed #e8eef6; font-size: 12px; }
+        .right-field:last-child { border-bottom: none; }
+        .right-field-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.2px; color: #5a7a98; min-width: 50px; background: #edf3fa; padding: 0 6px; border-radius: 30px; display: inline-block; text-align: center; }
+        .right-field-value { font-size: 13px; font-weight: 500; color: #0f2a45; flex: 1; min-width: 40px; }
+        .right-field-value .field-input { font-size: 12px; padding: 1px 4px; }
+        .right-field-value .field-select { font-size: 12px; padding: 1px 4px; }
+        .qty-result { font-weight: 700; color: #7a4a8a; background: #f3ecf8; padding: 0 8px; border-radius: 20px; font-size: 13px; }
+
+        .status-ok { color: #0a6b3a; background: #d4f0e0; padding: 1px 10px; border-radius: 20px; font-weight: 600; font-size: 11px; display: inline-block; }
+        .status-ng { color: #8a1a1a; background: #f7d4d4; padding: 1px 10px; border-radius: 20px; font-weight: 600; font-size: 11px; display: inline-block; }
+
+        /* SUB ITEM */
+        .sub-item-container { border: 1px solid #e0d8e8; border-radius: 8px; padding: 6px 8px; margin-top: 4px; background: #faf8fc; position: relative; }
+        .sub-item-container .btn-remove-subitem { position: absolute; top: 2px; right: 4px; background: #fee8e8; border: none; color: #b33a3a; width: 18px; height: 18px; border-radius: 50%; font-size: 12px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .sub-item-container .btn-remove-subitem:hover { background: #fccccc; }
+        .sub-item-container .right-field { border-bottom: 1px dashed #e8eef6; padding: 2px 0; }
+        .sub-item-container .right-field:last-child { border-bottom: none; }
+        .sub-item-container .right-field-label { font-size: 9px; min-width: 40px; }
+        .sub-item-container .right-field-value .field-input { font-size: 11px; padding: 1px 4px; }
+        .sub-item-container .right-field-value .field-select { font-size: 11px; padding: 1px 4px; }
+        .sub-item-container .right-field-value .qty-result { font-size: 11px; padding: 0 6px; }
+
+        .sub-items-wrapper { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; max-height: 250px; overflow-y: auto; }
+        .btn-add-subitem { background: #d0b8e0; border: none; color: #4a2a5a; padding: 3px 10px; border-radius: 30px; font-size: 10px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; width: 100%; justify-content: center; }
+        .btn-add-subitem:hover { background: #c0a8d0; }
+
+        /* SIGNATURE */
+        .signature-area { display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+        .signature-line { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
+        .signature-line label { font-size: 10px; font-weight: 600; color: #3e5e7c; min-width: 40px; }
+        .signature-input { border: none; border-bottom: 2px solid #c8d6e8; background: transparent; padding: 2px 4px; font-size: 13px; font-weight: 500; color: #0f2a45; outline: none; transition: 0.2s; flex: 1; min-width: 50px; }
+        .signature-input:focus { border-bottom-color: #1a4780; }
+        .signature-date { font-size: 11px; color: #5a7a98; display: flex; align-items: center; gap: 4px; }
+        .signature-date input { border: none; border-bottom: 1px dashed #c8d6e8; background: transparent; font-size: 11px; color: #0f2a45; padding: 1px 4px; outline: none; width: 90px; }
+        .signature-date input:focus { border-bottom-color: #1a4780; }
+
+        .btn-ttd { background: #1a4780; border: none; color: white; padding: 4px 10px; border-radius: 30px; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 4px; margin-top: 2px; width: 100%; justify-content: center; }
+        .btn-ttd:hover { background: #0f3460; }
+        .ttd-preview { display: flex; align-items: center; gap: 6px; margin-top: 2px; padding: 3px 6px; background: #f0f4fa; border-radius: 6px; min-height: 30px; border: 1px dashed #b8cde0; font-size: 11px; color: #5a7a98; width: 100%; overflow: hidden; }
+        .ttd-preview img { max-height: 35px; max-width: 100px; border-radius: 4px; background: white; }
+        .ttd-preview .ttd-empty { color: #a0b8d0; font-style: italic; font-size: 10px; }
+
+        /* DISABLED */
+        .field-input:disabled, .field-select:disabled, .signature-input:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            background: #f5f5f5;
+        }
+
+        /* MODAL */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9999; justify-content: center; align-items: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: white; border-radius: 20px; padding: 20px 16px 16px; max-width: 420px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.4); max-height: 95vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .modal-header h3 { font-size: 16px; color: #0b1e33; }
+        .modal-close { background: #f0f0f0; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 20px; cursor: pointer; color: #555; display: flex; align-items: center; justify-content: center; }
+        .modal-close:hover { background: #e0e0e0; }
+        .modal-body { text-align: center; }
+        .modal-body .info-text { font-size: 13px; color: #4a617c; margin-bottom: 10px; }
+        .canvas-wrapper { border: 2px solid #c8d6e8; border-radius: 10px; background: white; overflow: hidden; margin: 0 auto; }
+        .canvas-wrapper canvas { display: block; width: 100%; height: auto; background: white; cursor: crosshair; }
+        .modal-actions { display: flex; gap: 8px; margin-top: 12px; justify-content: center; flex-wrap: wrap; }
+        .modal-actions button { padding: 8px 18px; border: none; border-radius: 40px; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; flex: 1; min-width: 60px; }
+        .btn-clear-ttd { background: #f0f0f0; color: #555; }
+        .btn-save-ttd { background: #1a4780; color: white; }
+        .btn-cancel-ttd { background: #e8e8e8; color: #444; }
+
+        /* FOOTER */
+        .footer-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 14px; border-top: 1px solid #e2eaf3; gap: 10px; }
+        .footer-left { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .record-count { background: #ecf2f9; padding: 6px 18px; border-radius: 60px; font-size: 13px; color: #1b3a5a; }
+        .record-count strong { font-weight: 700; }
+        .btn-add-card { background: #1d3a5c; border: none; color: white; padding: 6px 20px; border-radius: 60px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+        .btn-add-card:hover { background: #123153; }
+        .print-btn { background: #1d3a5c; border: none; color: white; padding: 8px 24px; border-radius: 60px; font-weight: 500; font-size: 14px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s; }
+        .print-btn:hover { background: #123153; }
+        .info-note-bar { margin-top: 16px; font-size: 12px; color: #3d5f7f; display: flex; gap: 14px; flex-wrap: wrap; background: #f5f9ff; padding: 10px 18px; border-radius: 40px; align-items: center; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) { 
+            .item-grid { grid-template-columns: 1fr; } 
+            .right-col { grid-template-columns: 1fr 1fr; } 
+            .left-col { grid-template-columns: 1fr; } 
+            .search-bar { flex-direction: column; } 
+            .search-input-wrapper { width: 100%; } 
+            .container { padding: 16px; }
+        }
+        @media (max-width: 480px) { 
+            .right-col { grid-template-columns: 1fr; } 
+            .footer-actions { flex-direction: column; } 
+            .footer-left { flex-direction: column; } 
+            .print-btn { justify-content: center; } 
+            .btn-add-card { justify-content: center; } 
+        }
+
+        @media print { 
+            .print-btn, .btn-add-card, .btn-remove-card, .btn-ttd, .btn-toggle-card, .btn-toggle-all, .search-bar, .btn-add-subitem, .btn-remove-subitem, .top-bar { display: none !important; } 
+            .item-card { border: 1px solid #ccc !important; box-shadow: none !important; page-break-inside: avoid; } 
+        }
+    </style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+    <div class="icon">📋</div>
+    <h1>Incoming Material</h1>
+    <p>Check Sheet · GitHub Multi-Device</p>
+    <div class="spinner"></div>
+    <div class="progress"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="status" id="splashStatus">🔄 Menyiapkan aplikasi...</div>
+    <div class="version">v3.0 · GitHub Pages</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login">
+    <div class="login-box">
+        <div class="icon">🔐</div>
+        <h2>Material Check Sheet</h2>
+        <p class="subtitle">Login untuk melanjutkan</p>
+        <div class="form-group">
+            <label for="loginUser">Nama Pengguna</label>
+            <input type="text" id="loginUser" placeholder="Masukkan nama pengguna" autofocus>
+        </div>
+        <div class="form-group">
+            <label for="loginPassword">Kata Sandi</label>
+            <input type="password" id="loginPassword" placeholder="Masukkan kata sandi" onkeydown="if(event.key==='Enter') doLogin()">
+        </div>
+        <button class="login-btn" onclick="doLogin()">Masuk</button>
+        <div class="login-error" id="loginError"></div>
+        <div class="login-hint">
+            <div class="hint-title">📌 Akun Demo</div>
+            <div class="hint-item"><span class="role-name">🏢 Warehouse</span><span class="role-user">leader / 123456</span></div>
+            <div class="hint-item"><span class="role-name">🔬 QC Incoming</span><span class="role-user">Dede S. / 123456</span></div>
+            <div class="hint-item"><span class="role-name">📦 Supply</span><span class="role-user">Aziz / 123456</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="container" id="app" style="display:none;">
+    <!-- HEADER -->
+    <div class="header">
+        <h1>Incoming Material Check Sheet <small>· GitHub Multi-Device</small></h1>
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+            <div class="user-role-badge">
+                <span>👤 <span class="role-label" id="roleDisplay">Warehouse</span></span>
+                <span style="color:#b0c4db;">|</span>
+                <span id="userDisplay" style="font-weight:500;">leader</span>
+                <button class="logout-btn" onclick="doLogout()">Keluar</button>
+            </div>
+            <div class="badge-date"><span id="currentDate"></span></div>
+        </div>
+    </div>
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+        <div class="user-info">📧 <strong id="userEmail">Loading...</strong></div>
+        <span class="sync-status synced" id="syncStatus">✅ Tersimpan di GitHub</span>
+        <button class="btn-sync" onclick="syncToGitHub()">🔄 Sync GitHub</button>
+        <span style="font-size:11px;color:#888;margin-left:auto;" id="lastSync">Terakhir: -</span>
+        <span style="font-size:11px;color:#4fc3f7;" id="realtimeStatus">🔄 Real-time aktif</span>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-bar">
+        <label for="searchInput">🔍 Cari No. PI:</label>
+        <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="Ketik No. PI ..." oninput="filterCards()">
+            <button class="search-clear-btn" id="clearSearchBtn" onclick="clearSearch()">✕</button>
+        </div>
+        <div class="search-stats">Menampilkan <strong id="visibleCount">0</strong> dari <strong id="totalCount">0</strong></div>
+        <button class="btn-toggle-all" onclick="toggleAllCards()" id="toggleAllBtn">Tampilkan Semua</button>
+    </div>
+
+    <!-- LIST -->
+    <div class="vertical-list" id="verticalList"></div>
+
+    <!-- FOOTER -->
+    <div class="footer-actions">
+        <div class="footer-left">
+            <div class="record-count"><strong id="cardCount">0</strong> entries</div>
+            <button class="btn-add-card" onclick="addCard()">➕ Tambah Material</button>
+        </div>
+        <button class="print-btn" onclick="window.print()">🖨️ Cetak</button>
+    </div>
+    <div class="info-note-bar">
+        <span>🐙 Data tersimpan di GitHub Repository</span>
+        <span>🌐 Bisa diakses dari semua perangkat</span>
+        <span id="roleInfoNote">👥 Multi-user support</span>
+    </div>
+</div>
+
+<!-- MODAL TTD -->
+<div class="modal-overlay" id="signatureModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 id="modalTitle">✍️ Tanda Tangan</h3>
+            <button class="modal-close" onclick="closeSignatureModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <p class="info-text" id="modalInfo">Gambar tanda tangan Anda di area di bawah ini</p>
+            <div class="canvas-wrapper">
+                <canvas id="signatureCanvas" width="400" height="200"></canvas>
+            </div>
+            <div class="modal-actions">
+                <button class="btn-clear-ttd" onclick="clearSignature()">🗑️ Hapus</button>
+                <button class="btn-cancel-ttd" onclick="closeSignatureModal()">Batal</button>
+                <button class="btn-save-ttd" onclick="saveSignature()">✅ Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// ============================================================
+// KONFIGURASI GITHUB
+// ============================================================
+// ============================================================
+
+// ⚠️ GANTI DENGAN DATA GITHUB ANDA ⚠️
+const GITHUB_CONFIG = {
+    owner: 'tuyul-byte',      // Ganti dengan username GitHub Anda
+    repo: 'material-check-sheet',        // Nama repository
+    path: 'data.json',                   // Nama file data
+    token: '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'           // Token yang sudah dibuat
+};
+
+const GITHUB_API_URL = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.path}`;
+
+// ============================================================
+// FUNGSI GITHUB API
+// ============================================================
+
+// Fungsi untuk membaca data dari GitHub
+async function readGitHubData() {
+    try {
+        const response = await fetch(GITHUB_API_URL, {
+            headers: {
+                'Authorization': `token ${GITHUB_CONFIG.token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        const content = atob(data.content); // Decode base64
+        return JSON.parse(content);
+    } catch (error) {
+        console.error('Error reading from GitHub:', error);
+        return { data: [] };
+    }
+}
+
+// Fungsi untuk menulis data ke GitHub
+async function writeGitHubData(dataObj) {
+    try {
+        // Dapatkan SHA file terlebih dahulu
+        const getResponse = await fetch(GITHUB_API_URL, {
+            headers: {
+                'Authorization': `token ${GITHUB_CONFIG.token}`,
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+        
+        let sha = null;
+        if (getResponse.ok) {
+            const existing = await getResponse.json();
+            sha = existing.sha;
+        }
+        
+        const content = btoa(unescape(encodeURIComponent(JSON.stringify(dataObj, null, 2))));
+        
+        const payload = {
+            message: `Update data ${new Date().toLocaleString()}`,
+            content: content,
+            branch: 'main'
+        };
+        
+        if (sha) {
+            payload.sha = sha;
+        }
+        
+        const response = await fetch(GITHUB_API_URL, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `token ${GITHUB_CONFIG.token}`,
+                'Content-Type': 'application/json',
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify(payload)
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`HTTP ${response.status}: ${errorData.message || response.statusText}`);
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error writing to GitHub:', error);
+        throw error;
+    }
+}
+
+// ============================================================
+// BROADCAST CHANNEL (Real-time antar tab)
+// ============================================================
+let broadcastChannel = null;
+
+function initBroadcast() {
+    try {
+        broadcastChannel = new BroadcastChannel('material_check_sheet_github');
+        broadcastChannel.onmessage = function(event) {
+            console.log('📡 Real-time update received:', event.data);
+            if (event.data.type === 'data_updated') {
+                loadDataFromGitHub();
+            }
+        };
+        document.getElementById('realtimeStatus').textContent = '🔄 Real-time aktif (✓)';
+    } catch (e) {
+        console.warn('Broadcast Channel tidak didukung:', e);
+        document.getElementById('realtimeStatus').textContent = '⚠️ Real-time tidak tersedia';
+    }
+}
+
+function broadcastUpdate(action, data) {
+    if (broadcastChannel) {
+        try {
+            broadcastChannel.postMessage({ type: action, data: data, timestamp: Date.now() });
+        } catch (e) {
+            console.warn('Broadcast error:', e);
+        }
+    }
+}
+
+// ============================================================
+// LOGIN SYSTEM
+// ============================================================
+const USERS = {
+    'leader': { password: '123456', role: 'warehouse', displayName: 'Leader' },
+    'Dede S.': { password: '123456', role: 'qc', displayName: 'Dede S.' },
+    'Aziz': { password: '123456', role: 'supply', displayName: 'Aziz' }
+};
+
+let currentUser = null;
+let currentRole = null;
+
+function doLogin() {
+    const username = document.getElementById('loginUser').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    const errorEl = document.getElementById('loginError');
+    
+    if (!username || !password) {
+        errorEl.textContent = '❌ Harap isi nama pengguna dan kata sandi!';
+        return;
+    }
+    
+    const user = USERS[username];
+    if (!user) {
+        errorEl.textContent = '❌ Nama pengguna tidak ditemukan!';
+        return;
+    }
+    
+    if (user.password !== password) {
+        errorEl.textContent = '❌ Kata sandi salah!';
+        return;
+    }
+    
+    errorEl.textContent = '';
+    currentUser = username;
+    currentRole = user.role;
+    
+    document.getElementById('login').classList.add('hidden');
+    document.getElementById('app').style.display = 'block';
+    
+    document.getElementById('roleDisplay').textContent = getRoleLabel(currentRole);
+    document.getElementById('userDisplay').textContent = user.displayName;
+    document.getElementById('userEmail').textContent = username + ' (' + getRoleLabel(currentRole) + ')';
+    document.getElementById('roleInfoNote').textContent = '👤 ' + getRoleLabel(currentRole) + ' · ' + user.displayName;
+    
+    initBroadcast();
+    initializeApp();
+}
+
+function getRoleLabel(role) {
+    const labels = { 'warehouse': '🏢 Warehouse', 'qc': '🔬 QC Incoming', 'supply': '📦 Supply' };
+    return labels[role] || role;
+}
+
+function doLogout() {
+    if (confirm('Yakin ingin keluar?')) {
+        currentUser = null;
+        currentRole = null;
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('login').classList.remove('hidden');
+        document.getElementById('loginUser').value = '';
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('loginError').textContent = '';
+        document.getElementById('verticalList').innerHTML = '';
+    }
+}
+
+// ============================================================
+// SPLASH SCREEN
+// ============================================================
+function showSplash() {
+    const splash = document.getElementById('splash');
+    const progressBar = document.getElementById('progressBar');
+    const status = document.getElementById('splashStatus');
+    
+    let progress = 0;
+    const steps = [
+        { progress: 20, text: 'Memuat konfigurasi...' },
+        { progress: 50, text: 'Menghubungkan ke GitHub...' },
+        { progress: 80, text: 'Mengambil data terbaru...' },
+        { progress: 100, text: 'Siap digunakan!' }
+    ];
+    
+    steps.forEach((step, index) => {
+        setTimeout(() => {
+            progressBar.style.width = step.progress + '%';
+            status.textContent = '🔄 ' + step.text;
+            if (step.progress === 100) {
+                setTimeout(() => {
+                    splash.classList.add('hidden');
+                    document.getElementById('login').classList.remove('hidden');
+                }, 500);
+            }
+        }, (index + 1) * 600);
+    });
+}
+
+// ============================================================
+// VARIABEL GLOBAL
+// ============================================================
+let currentContext = null;
+let isDrawing = false;
+let lastX = 0, lastY = 0;
+let canvas, ctx;
+let signatureData = null;
+let allData = [];
+let cardCounter = 0;
+
+// ============================================================
+// FUNGSI INISIALISASI
+// ============================================================
+function initializeApp() {
+    const el = document.getElementById('currentDate');
+    if (el) {
+        const today = new Date();
+        el.textContent = today.toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+    initCanvas();
+    loadDataFromGitHub();
+    
+    // Auto-sync setiap 30 detik
+    setInterval(function() {
+        loadDataFromGitHub();
+    }, 30000);
+}
+
+// ============================================================
+// FUNGSI LOAD DATA DARI GITHUB
+// ============================================================
+async function loadDataFromGitHub() {
+    showSyncStatus('syncing', '🔄 Memuat dari GitHub...');
+    
+    try {
+        const result = await readGitHubData();
+        if (result && result.data) {
+            allData = result.data;
+            renderCards(allData);
+            showSyncStatus('synced', '✅ ' + allData.length + ' data dimuat dari GitHub');
+            document.getElementById('lastSync').textContent = 'Terakhir: ' + new Date().toLocaleTimeString();
+        } else {
+            showSyncStatus('error', '⚠️ Gagal memuat data');
+        }
+    } catch (error) {
+        console.error('Load data error:', error);
+        showSyncStatus('error', '⚠️ Error: ' + error.message);
+        // Coba load dari localStorage sebagai fallback
+        loadFromLocalStorage();
+    }
+}
+
+// ============================================================
+// FUNGSI SYNC KE GITHUB
+// ============================================================
+async function syncToGitHub() {
+    const data = collectAllData();
+    if (data.length === 0) {
+        alert('Tidak ada data untuk disimpan!');
+        return;
+    }
+    
+    showSyncStatus('syncing', '🐙 Menyimpan ke GitHub...');
+    
+    try {
+        const result = await writeGitHubData({ data: data });
+        if (result) {
+            allData = data;
+            showSyncStatus('synced', '✅ ' + data.length + ' data tersimpan di GitHub');
+            document.getElementById('lastSync').textContent = 'GitHub: ' + new Date().toLocaleTimeString();
+            broadcastUpdate('data_updated', { count: data.length });
+            alert('✅ Data berhasil disimpan ke GitHub!\n' + data.length + ' data tersimpan.');
+        }
+    } catch (error) {
+        console.error('Sync error:', error);
+        showSyncStatus('error', '⚠️ Gagal sync: ' + error.message);
+        alert('❌ Gagal menyimpan ke GitHub!\nError: ' + error.message);
+    }
+}
+
+// ============================================================
+// FUNGSI LOAD DARI LOCALSTORAGE (FALLBACK)
+// ============================================================
+function loadFromLocalStorage() {
+    try {
+        const stored = localStorage.getItem('material_check_sheet_data');
+        if (stored) {
+            const data = JSON.parse(stored);
+            if (data && data.length > 0) {
+                allData = data;
+                renderCards(allData);
+                showSyncStatus('synced', '✅ ' + allData.length + ' data dimuat (local fallback)');
+                document.getElementById('lastSync').textContent = 'Local: ' + new Date().toLocaleTimeString();
+                return;
+            }
+        }
+        // Jika tidak ada data, buat kosong
+        allData = [];
+        renderCards(allData);
+        showSyncStatus('synced', '✅ Tidak ada data');
+    } catch (e) {
+        console.error('LocalStorage error:', e);
+        allData = [];
+        renderCards(allData);
+    }
+}
+
+// ============================================================
+// FUNGSI COLLECT ALL DATA DARI KARTU
+// ============================================================
+function collectAllData() {
+    const cards = document.querySelectorAll('.item-card');
+    const dataList = [];
+    cards.forEach((card) => {
+        try {
+            const piInput = card.querySelector('.pi-input');
+            const piNo = piInput ? piInput.value.trim() : '';
+            if (piNo) {
+                const data = collectFullData(card, piNo);
+                dataList.push(data);
+            }
+        } catch (e) {
+            console.error('Error collecting data:', e);
+        }
+    });
+    return dataList;
+}
+
+// ============================================================
+// FUNGSI COLLECT FULL DATA
+// ============================================================
+function collectFullData(card, piNo) {
+    const safeGet = (selector, fallback = '') => {
+        try {
+            const el = card.querySelector(selector);
+            if (el) {
+                return el.value || fallback;
+            }
+            return fallback;
+        } catch (e) {
+            return fallback;
+        }
+    };
+    
+    const safeGetSelect = (selector, fallback = '') => {
+        try {
+            const el = card.querySelector(selector);
+            if (el) {
+                return el.value || fallback;
+            }
+            return fallback;
+        } catch (e) {
+            return fallback;
+        }
+    };
+    
+    const getTtdPreview = (type) => {
+        try {
+            const preview = card.querySelector(`.ttd-preview[id^="preview-${type}"]`);
+            if (preview) {
+                const img = preview.querySelector('img');
+                return img ? img.src : '';
+            }
+            return '';
+        } catch (e) {
+            return '';
+        }
+    };
+    
+    const subItems = card.querySelectorAll('.sub-item-container');
+    const keteranganItems = [];
+    subItems.forEach(sub => {
+        try {
+            const item = {
+                jenis: safeGetSub(sub, '.item-type-select') || '',
+                status: safeGetSub(sub, '.status-select') || '',
+                qty: safeGetSub(sub, '.qty-sheet-input') || '',
+                unit: safeGetSub(sub, '.unit-select') || 'sheet',
+                potongan: safeGetSub(sub, '.potongan-input') || '',
+                total_pcs: sub.querySelector('.total-pcs-result')?.textContent || '0',
+                keterangan: safeGetSub(sub, '.field-input-sm:last-child') || ''
+            };
+            if (item.jenis) keteranganItems.push(item);
+        } catch (e) {}
+    });
+    
+    function safeGetSub(sub, selector) {
+        try {
+            const el = sub.querySelector(selector);
+            return el ? el.value : '';
+        } catch (e) { return ''; }
+    }
+    
+    return {
+        pi_no: piNo,
+        qty_pi: safeGet('.field-input[placeholder="Qty PI"]'),
+        brand: safeGet('.field-input[placeholder="Brand"]'),
+        supplier: safeGet('.field-input[placeholder="Supplier"]'),
+        do_sj_no: safeGet('.field-input[placeholder="DO/SJ No"]'),
+        delivery_date: safeGet('.field-input[type="date"]'),
+        time: safeGet('.field-input[type="time"]'),
+        qty_do_sj: safeGet('.field-input[placeholder="Qty DO/SJ"]'),
+        do_sj_unit: safeGet('.field-input[placeholder="Masukkan Unit"]'),
+        warehouse_nama: safeGet('.signature-input[placeholder="Nama penerima"]'),
+        warehouse_jabatan: safeGet('.signature-input[placeholder="Jabatan"]'),
+        warehouse_ttd: getTtdPreview('warehouse'),
+        warehouse_tanggal: safeGet('.signature-area .signature-date input[type="date"]'),
+        qc_pic: safeGet('.right-section .field-input-sm[placeholder="PIC QC"]'),
+        qc_hasil: safeGetSelect('.right-section .field-select-sm:has(option[value="Lulus"])'),
+        qc_catatan: safeGet('.right-section .field-input-sm[placeholder="Catatan"]'),
+        qc_ttd: getTtdPreview('qc'),
+        qc_tanggal: safeGet('.right-section .signature-date input[type="date"]'),
+        keterangan_items: JSON.stringify(keteranganItems),
+        supply_pic: safeGet('.right-section .field-input-sm[placeholder="PIC Supply"]'),
+        supply_ketersediaan: safeGetSelect('.right-section .field-select-sm:has(option[value="Ready"])'),
+        supply_prioritas: safeGetSelect('.right-section .field-select-sm:has(option[value="Normal"])'),
+        supply_ttd: getTtdPreview('supply'),
+        supply_tanggal: safeGet('.right-section .signature-date input[type="date"]:last-child'),
+        user_email: currentUser || '',
+        user_role: currentRole || '',
+        timestamp: new Date().toISOString()
+    };
+}
+
+// ============================================================
+// FUNGSI RENDER KARTU
+// ============================================================
+function renderCards(data) {
+    const list = document.getElementById('verticalList');
+    list.innerHTML = '';
+    
+    if (!data || data.length === 0) {
+        addCard();
+        return;
+    }
+    
+    data.forEach((item) => {
+        const card = createCardFromData(item);
+        list.appendChild(card);
+    });
+    
+    updateCardCount();
+    updateStats();
+    
+    setTimeout(() => {
+        document.querySelectorAll('.qty-sheet-input').forEach(el => calculatePcs(el));
+        document.querySelectorAll('.status-select').forEach(sel => {
+            if (sel.value) updateStatusDisplay(sel);
+        });
+        applyRoleRestrictions();
+    }, 100);
+}
+
+// ============================================================
+// FUNGSI CREATE CARD FROM DATA
+// ============================================================
+function createCardFromData(data) {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    const cardIndex = cardCounter++;
+    
+    let subItemsHtml = '';
+    try {
+        const items = JSON.parse(data.keterangan_items || '[]');
+        if (items.length > 0) {
+            items.forEach(item => {
+                subItemsHtml += createSubItemHtml(item);
+            });
+        }
+    } catch {
+        subItemsHtml = '';
+    }
+    
+    const warehouseSaved = data.warehouse_nama || data.warehouse_jabatan || data.warehouse_ttd ? '✅' : '';
+    const qcSaved = data.qc_pic || data.qc_hasil || data.qc_ttd ? '✅' : '';
+    const supplySaved = data.supply_pic || data.supply_ketersediaan || data.supply_ttd ? '✅' : '';
+    
+    card.innerHTML = `
+        <button class="btn-toggle-card" onclick="toggleCard(this)">👁</button>
+        <button class="btn-remove-card" onclick="removeCard(this)" ${currentRole !== 'warehouse' ? 'style="display:none;"' : ''}>✕</button>
+        <div class="item-grid">
+            <div class="left-col">
+                <div class="field"><span class="field-label">PI No</span><span class="field-value"><input type="text" class="field-input pi-input" placeholder="Masukkan PI No" value="${data.pi_no || ''}"></span></div>
+                <div class="field"><span class="field-label">Qty PI</span><span class="field-value"><input type="text" class="field-input" placeholder="Qty PI" value="${data.qty_pi || ''}"></span></div>
+                <div class="field"><span class="field-label">Brand</span><span class="field-value"><input type="text" class="field-input" placeholder="Brand" value="${data.brand || ''}"></span></div>
+                <div class="field"><span class="field-label">Supplier</span><span class="field-value"><input type="text" class="field-input" placeholder="Supplier" value="${data.supplier || ''}"></span></div>
+                <div class="field"><span class="field-label">DO/SJ No</span><span class="field-value"><input type="text" class="field-input" placeholder="DO/SJ No" value="${data.do_sj_no || ''}"></span></div>
+                <div class="field"><span class="field-label">Delivery Date</span><span class="field-value"><input type="date" class="field-input" placeholder="Tanggal" value="${data.delivery_date || ''}"></span></div>
+                <div class="field"><span class="field-label">Time</span><span class="field-value"><input type="time" class="field-input" placeholder="Waktu" value="${data.time || ''}"></span></div>
+                <div class="field"><span class="field-label">Qty DO/SJ</span><span class="field-value"><input type="text" class="field-input" placeholder="Qty DO/SJ" value="${data.qty_do_sj || ''}"></span></div>
+                <div class="field"><span class="field-label">DO/SJ Unit</span><span class="field-value"><input type="text" class="field-input" placeholder="Masukkan Unit" value="${data.do_sj_unit || ''}"></span></div>
+            </div>
+            <div class="right-col">
+                <div class="right-section">
+                    <div class="right-section-title title-warehouse">🏢 Warehouse</div>
+                    <div class="signature-area">
+                        <div class="signature-line"><label>Nama</label><input type="text" class="signature-input" placeholder="Nama penerima" value="${data.warehouse_nama || ''}"></div>
+                        <div class="signature-line"><label>Jabatan</label><input type="text" class="signature-input" placeholder="Jabatan" value="${data.warehouse_jabatan || ''}"></div>
+                        <button class="btn-ttd" onclick="openSignatureModal(this, 'warehouse')">✍️ Tanda Tangan</button>
+                        <div class="ttd-preview" id="preview-warehouse-${cardIndex}">${data.warehouse_ttd ? `<img src="${data.warehouse_ttd}">` : '<span class="ttd-empty">Belum ada tanda tangan</span>'}</div>
+                        <div class="signature-date"><span>📅 Tanggal</span><input type="date" placeholder="Tgl" value="${data.warehouse_tanggal || ''}"></div>
+                    </div>
+                    <div style="font-size:10px;color:#888;margin-top:2px;">${warehouseSaved ? '✅ Tersimpan' : ''}</div>
+                    
+                    <div style="margin-top:10px;">
+                        <div class="right-section-title title-qc">🔬 QC Incoming</div>
+                        <div class="right-field"><span class="right-field-label">PIC</span><span class="right-field-value"><input type="text" class="field-input field-input-sm" placeholder="PIC QC" value="${data.qc_pic || ''}"></span></div>
+                        <div class="right-field"><span class="right-field-label">Hasil</span><span class="right-field-value"><select class="field-select field-input-sm"><option value="" ${!data.qc_hasil ? 'selected' : ''} disabled>Pilih Hasil</option><option value="Lulus" ${data.qc_hasil === 'Lulus' ? 'selected' : ''}>Lulus</option><option value="Pending" ${data.qc_hasil === 'Pending' ? 'selected' : ''}>Pending</option><option value="Tidak Lulus" ${data.qc_hasil === 'Tidak Lulus' ? 'selected' : ''}>Tidak Lulus</option><option value="Review" ${data.qc_hasil === 'Review' ? 'selected' : ''}>Review</option></select></span></div>
+                        <div class="right-field"><span class="right-field-label">Catatan</span><span class="right-field-value"><input type="text" class="field-input field-input-sm" placeholder="Catatan" value="${data.qc_catatan || ''}"></span></div>
+                        <button class="btn-ttd" onclick="openSignatureModal(this, 'qc')">✍️ TTD QC</button>
+                        <div class="ttd-preview" id="preview-qc-${cardIndex}">${data.qc_ttd ? `<img src="${data.qc_ttd}">` : '<span class="ttd-empty">Belum ada tanda tangan</span>'}</div>
+                        <div class="signature-date" style="margin-top:4px;"><span>📅 Tanggal QC</span><input type="date" placeholder="Tgl QC" value="${data.qc_tanggal || ''}"></div>
+                        <div style="font-size:10px;color:#888;margin-top:2px;">${qcSaved ? '✅ Tersimpan' : ''}</div>
+                    </div>
+                </div>
+                <div class="right-section">
+                    <div>
+                        <div class="right-section-title title-keterangan">📝 Keterangan</div>
+                        <div class="sub-items-wrapper" id="subitems-${cardIndex}">${subItemsHtml}</div>
+                        <button class="btn-add-subitem" onclick="addSubItem(this)" ${currentRole === 'supply' ? 'style="display:none;"' : ''}>➕ Tambah Item</button>
+                        <div style="font-size:10px;color:#888;margin-top:2px;">${qcSaved ? '✅ Tersimpan' : ''}</div>
+                    </div>
+                    
+                    <div style="margin-top:10px;">
+                        <div class="right-section-title title-supply">📦 Supply</div>
+                        <div class="right-field"><span class="right-field-label">PIC</span><span class="right-field-value"><input type="text" class="field-input field-input-sm" placeholder="PIC Supply" value="${data.supply_pic || ''}"></span></div>
+                        <div class="right-field"><span class="right-field-label">Ketersediaan</span><span class="right-field-value"><select class="field-select field-input-sm"><option value="" ${!data.supply_ketersediaan ? 'selected' : ''} disabled>Pilih</option><option value="Ready" ${data.supply_ketersediaan === 'Ready' ? 'selected' : ''}>Ready</option><option value="Menunggu" ${data.supply_ketersediaan === 'Menunggu' ? 'selected' : ''}>Menunggu</option><option value="Kosong" ${data.supply_ketersediaan === 'Kosong' ? 'selected' : ''}>Kosong</option><option value="Order" ${data.supply_ketersediaan === 'Order' ? 'selected' : ''}>Order</option></select></span></div>
+                        <div class="right-field"><span class="right-field-label">Prioritas</span><span class="right-field-value"><select class="field-select field-input-sm"><option value="" ${!data.supply_prioritas ? 'selected' : ''} disabled>Pilih</option><option value="Normal" ${data.supply_prioritas === 'Normal' ? 'selected' : ''}>Normal</option><option value="High" ${data.supply_prioritas === 'High' ? 'selected' : ''}>High</option><option value="Medium" ${data.supply_prioritas === 'Medium' ? 'selected' : ''}>Medium</option><option value="Low" ${data.supply_prioritas === 'Low' ? 'selected' : ''}>Low</option><option value="Urgent" ${data.supply_prioritas === 'Urgent' ? 'selected' : ''}>Urgent</option></select></span></div>
+                        <button class="btn-ttd" onclick="openSignatureModal(this, 'supply')">✍️ TTD Supply</button>
+                        <div class="ttd-preview" id="preview-supply-${cardIndex}">${data.supply_ttd ? `<img src="${data.supply_ttd}">` : '<span class="ttd-empty">Belum ada tanda tangan</span>'}</div>
+                        <div class="signature-date" style="margin-top:4px;"><span>📅 Tanggal Supply</span><input type="date" placeholder="Tgl Supply" value="${data.supply_tanggal || ''}"></div>
+                        <div style="font-size:10px;color:#888;margin-top:2px;">${supplySaved ? '✅ Tersimpan' : ''}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+// ============================================================
+// FUNGSI CREATE SUB ITEM HTML
+// ============================================================
+function createSubItemHtml(item) {
+    const statusOptions = ['', 'OK', 'NG'].map(val => 
+        `<option value="${val}" ${item.status === val ? 'selected' : ''}>${val === '' ? 'Pilih Status' : val}</option>`
+    ).join('');
+    
+    const unitOptions = ['sheet', 'pcs'].map(val => 
+        `<option value="${val}" ${item.unit === val ? 'selected' : ''}>${val === 'sheet' ? 'Sheet' : 'PCS'}</option>`
+    ).join('');
+    
+    const jenisOptions = ['', 'Booklet', 'Display', 'Filtertips', 'Trapezoid'].map(val => 
+        `<option value="${val}" ${item.jenis === val ? 'selected' : ''}>${val || 'Pilih Jenis'}</option>`
+    ).join('');
+    
+    const statusDisplay = item.status === 'OK' ? '<span class="status-ok">✅ OK</span>' : 
+                         item.status === 'NG' ? '<span class="status-ng">❌ NG</span>' : 
+                         'Belum dipilih';
+    
+    return `
+        <div class="sub-item-container">
+            <button class="btn-remove-subitem" onclick="removeSubItem(this)">✕</button>
+            <div class="right-field"><span class="right-field-label">Jenis</span><span class="right-field-value"><select class="field-select field-input-sm item-type-select">${jenisOptions}</select></span></div>
+            <div class="right-field"><span class="right-field-label">Status</span><span class="right-field-value"><select class="field-select field-input-sm status-select" onchange="updateStatusDisplay(this)">${statusOptions}</select></span></div>
+            <div class="right-field" style="background:#f5f5f5;border-radius:6px;padding:3px 6px;min-height:24px;"><span class="right-field-label" style="background:#e8e8e8;font-size:9px;">Status</span><span class="right-field-value status-display-text" style="font-size:11px;">${statusDisplay}</span></div>
+            <div class="right-field"><span class="right-field-label">Qty</span><span class="right-field-value"><input type="number" class="field-input field-input-sm qty-sheet-input" placeholder="Jumlah" oninput="calculatePcs(this)" value="${item.qty || ''}"></span></div>
+            <div class="right-field"><span class="right-field-label">Unit</span><span class="right-field-value"><select class="field-select field-input-sm unit-select" onchange="calculatePcs(this)">${unitOptions}</select></span></div>
+            <div class="right-field"><span class="right-field-label">Pot/Sheet</span><span class="right-field-value"><input type="number" class="field-input field-input-sm potongan-input" placeholder="Potongan/Sheet" oninput="calculatePcs(this)" value="${item.potongan || ''}" min="1"></span></div>
+            <div class="right-field" style="background:#f3ecf8;border-radius:6px;padding:3px 6px;margin-top:3px;"><span class="right-field-label" style="background:#e0d0e8;font-size:9px;">Total PCS</span><span class="right-field-value"><span class="qty-result total-pcs-result">${item.total_pcs || '0'}</span></span></div>
+            <div class="right-field"><span class="right-field-label">Ket</span><span class="right-field-value"><input type="text" class="field-input field-input-sm" placeholder="Catatan" value="${item.keterangan || ''}"></span></div>
+        </div>
+    `;
+}
+
+// ============================================================
+// FUNGSI CREATE EMPTY SUB ITEM
+// ============================================================
+function createEmptySubItem() {
+    return `
+        <div class="sub-item-container">
+            <button class="btn-remove-subitem" onclick="removeSubItem(this)">✕</button>
+            <div class="right-field"><span class="right-field-label">Jenis</span><span class="right-field-value"><select class="field-select field-input-sm item-type-select"><option value="" selected disabled>Pilih Jenis</option><option value="Booklet">Booklet</option><option value="Display">Display</option><option value="Filtertips">Filtertips</option><option value="Trapezoid">Trapezoid</option></select></span></div>
+            <div class="right-field"><span class="right-field-label">Status</span><span class="right-field-value"><select class="field-select field-input-sm status-select" onchange="updateStatusDisplay(this)"><option value="" selected disabled>Pilih Status</option><option value="OK">OK</option><option value="NG">NG</option></select></span></div>
+            <div class="right-field" style="background:#f5f5f5;border-radius:6px;padding:3px 6px;min-height:24px;"><span class="right-field-label" style="background:#e8e8e8;font-size:9px;">Status</span><span class="right-field-value status-display-text" style="font-size:11px;color:#888;">Belum dipilih</span></div>
+            <div class="right-field"><span class="right-field-label">Qty</span><span class="right-field-value"><input type="number" class="field-input field-input-sm qty-sheet-input" placeholder="Jumlah" oninput="calculatePcs(this)"></span></div>
+            <div class="right-field"><span class="right-field-label">Unit</span><span class="right-field-value"><select class="field-select field-input-sm unit-select" onchange="calculatePcs(this)"><option value="sheet" selected>Sheet</option><option value="pcs">PCS</option></select></span></div>
+            <div class="right-field"><span class="right-field-label">Pot/Sheet</span><span class="right-field-value"><input type="number" class="field-input field-input-sm potongan-input" placeholder="Potongan/Sheet" oninput="calculatePcs(this)" min="1"></span></div>
+            <div class="right-field" style="background:#f3ecf8;border-radius:6px;padding:3px 6px;margin-top:3px;"><span class="right-field-label" style="background:#e0d0e8;font-size:9px;">Total PCS</span><span class="right-field-value"><span class="qty-result total-pcs-result">0</span></span></div>
+            <div class="right-field"><span class="right-field-label">Ket</span><span class="right-field-value"><input type="text" class="field-input field-input-sm" placeholder="Catatan"></span></div>
+        </div>
+    `;
+}
+
+// ============================================================
+// FUNGSI UPDATE STATUS DISPLAY
+// ============================================================
+function updateStatusDisplay(select) {
+    const container = select.closest('.sub-item-container');
+    const displayText = container.querySelector('.status-display-text');
+    if (!displayText) return;
+
+    const value = select.value;
+    if (value === 'OK') {
+        displayText.innerHTML = '<span class="status-ok">✅ OK</span>';
+    } else if (value === 'NG') {
+        displayText.innerHTML = '<span class="status-ng">❌ NG</span>';
+    } else {
+        displayText.textContent = 'Belum dipilih';
+        displayText.style.color = '#888';
+    }
+}
+
+// ============================================================
+// FUNGSI KALKULASI SHEET → PCS
+// ============================================================
+function calculatePcs(element) {
+    const container = element.closest('.sub-item-container');
+    if (!container) return;
+
+    const qtyInput = container.querySelector('.qty-sheet-input');
+    const potonganInput = container.querySelector('.potongan-input');
+    const unitSelect = container.querySelector('.unit-select');
+    const totalSpan = container.querySelector('.total-pcs-result');
+
+    if (!qtyInput || !potonganInput || !unitSelect || !totalSpan) return;
+
+    const qty = parseFloat(qtyInput.value) || 0;
+    const potongan = parseFloat(potonganInput.value) || 1;
+    const unit = unitSelect.value;
+
+    let totalPcs = 0;
+    if (unit === 'sheet') {
+        totalPcs = qty * potongan;
+    } else {
+        totalPcs = qty;
+    }
+
+    totalSpan.textContent = totalPcs;
+}
+
+// ============================================================
+// TAMBAH SUB ITEM
+// ============================================================
+function addSubItem(btn) {
+    if (currentRole === 'supply') {
+        alert('Anda tidak memiliki akses!');
+        return;
+    }
+    
+    const wrapper = btn.closest('.right-section').querySelector('.sub-items-wrapper');
+    if (!wrapper) return;
+
+    const newItem = document.createElement('div');
+    newItem.innerHTML = createEmptySubItem();
+    const newSubItem = newItem.firstElementChild;
+    
+    newSubItem.querySelectorAll('.qty-sheet-input, .potongan-input, .unit-select').forEach(el => {
+        el.addEventListener('input', function() { calculatePcs(this); });
+        el.addEventListener('change', function() { calculatePcs(this); });
+    });
+
+    newSubItem.querySelectorAll('.status-select').forEach(sel => {
+        sel.addEventListener('change', function() { updateStatusDisplay(this); });
+    });
+
+    wrapper.appendChild(newSubItem);
+    
+    const qtyInput = newSubItem.querySelector('.qty-sheet-input');
+    if (qtyInput) calculatePcs(qtyInput);
+}
+
+// ============================================================
+// HAPUS SUB ITEM
+// ============================================================
+function removeSubItem(btn) {
+    if (currentRole === 'supply') {
+        alert('Anda tidak memiliki akses!');
+        return;
+    }
+    
+    const container = btn.closest('.sub-item-container');
+    const wrapper = container.closest('.sub-items-wrapper');
+    
+    if (wrapper.querySelectorAll('.sub-item-container').length > 0) {
+        container.remove();
+    }
+}
+
+// ============================================================
+// FUNGSI APPLY ROLE RESTRICTIONS
+// ============================================================
+function applyRoleRestrictions() {
+    const cards = document.querySelectorAll('.item-card');
+    cards.forEach(card => {
+        // Warehouse
+        const warehouseSection = card.querySelector('.title-warehouse')?.closest('.right-section');
+        if (warehouseSection) {
+            const inputs = warehouseSection.querySelectorAll('input, select');
+            const ttdBtn = warehouseSection.querySelector('.btn-ttd');
+            if (currentRole === 'warehouse') {
+                inputs.forEach(el => el.disabled = false);
+                if (ttdBtn) ttdBtn.style.display = 'inline-flex';
+                warehouseSection.style.opacity = '1';
+                warehouseSection.style.pointerEvents = 'auto';
+            } else {
+                inputs.forEach(el => el.disabled = true);
+                if (ttdBtn) ttdBtn.style.display = 'none';
+                warehouseSection.style.opacity = '0.7';
+                warehouseSection.style.pointerEvents = 'none';
+            }
+        }
+        
+        // QC
+        const qcSection = card.querySelector('.title-qc')?.closest('.right-section');
+        if (qcSection) {
+            const inputs = qcSection.querySelectorAll('input, select');
+            const ttdBtn = qcSection.querySelector('.btn-ttd');
+            if (currentRole === 'warehouse' || currentRole === 'qc') {
+                inputs.forEach(el => el.disabled = false);
+                if (ttdBtn) ttdBtn.style.display = 'inline-flex';
+                qcSection.style.opacity = '1';
+                qcSection.style.pointerEvents = 'auto';
+            } else {
+                inputs.forEach(el => el.disabled = true);
+                if (ttdBtn) ttdBtn.style.display = 'none';
+                qcSection.style.opacity = '0.7';
+                qcSection.style.pointerEvents = 'none';
+            }
+        }
+        
+        // Keterangan
+        const keteranganSection = card.querySelector('.title-keterangan')?.closest('.right-section');
+        if (keteranganSection) {
+            const inputs = keteranganSection.querySelectorAll('input, select');
+            const addBtn = keteranganSection.querySelector('.btn-add-subitem');
+            const removeBtns = keteranganSection.querySelectorAll('.btn-remove-subitem');
+            
+            if (currentRole === 'warehouse' || currentRole === 'qc') {
+                inputs.forEach(el => el.disabled = false);
+                if (addBtn) addBtn.style.display = 'inline-flex';
+                removeBtns.forEach(btn => btn.style.display = 'flex');
+                keteranganSection.style.opacity = '1';
+                keteranganSection.style.pointerEvents = 'auto';
+            } else {
+                inputs.forEach(el => el.disabled = true);
+                if (addBtn) addBtn.style.display = 'none';
+                removeBtns.forEach(btn => btn.style.display = 'none');
+                keteranganSection.style.opacity = '0.7';
+                keteranganSection.style.pointerEvents = 'none';
+            }
+        }
+        
+        // Supply
+        const supplySection = card.querySelector('.title-supply')?.closest('.right-section');
+        if (supplySection) {
+            const inputs = supplySection.querySelectorAll('input, select');
+            const ttdBtn = supplySection.querySelector('.btn-ttd');
+            if (currentRole === 'warehouse' || currentRole === 'supply') {
+                inputs.forEach(el => el.disabled = false);
+                if (ttdBtn) ttdBtn.style.display = 'inline-flex';
+                supplySection.style.opacity = '1';
+                supplySection.style.pointerEvents = 'auto';
+            } else {
+                inputs.forEach(el => el.disabled = true);
+                if (ttdBtn) ttdBtn.style.display = 'none';
+                supplySection.style.opacity = '0.7';
+                supplySection.style.pointerEvents = 'none';
+            }
+        }
+        
+        // Remove button
+        const removeBtn = card.querySelector('.btn-remove-card');
+        if (removeBtn) {
+            removeBtn.style.display = currentRole === 'warehouse' ? 'flex' : 'none';
+        }
+    });
+}
+
+// ============================================================
+// TAMBAH KARTU
+// ============================================================
+function addCard() {
+    if (currentRole !== 'warehouse') {
+        alert('Hanya Warehouse yang dapat menambahkan data!');
+        return;
+    }
+    
+    const list = document.getElementById('verticalList');
+    const newCard = document.createElement('div');
+    newCard.className = 'item-card';
+    const cardIndex = cardCounter++;
+    
+    newCard.innerHTML = `
+        <button class="btn-toggle-card" onclick="toggleCard(this)">👁</button>
+        <button class="btn-remove-card" onclick="removeCard(this)">✕</button>
+        <div class="item-grid">
+            <div class="left-col">
+                <div class="field"><span class="field-label">PI No</span><span class="field-value"><input type="text" class="field-input pi-input" placeholder="Masukkan PI No"></span></div>
+                <div class="field"><span class="field-label">Qty PI</span><span class="field-value"><input type="text" class="field-input" placeholder="Qty PI"></span></div>
+                <div class="field"><span class="field-label">Brand</span><span class="field-value"><input type="text" class="field-input" placeholder="Brand"></span></div>
+                <div class="field"><span class="field-label">Supplier</span><span class="field-value"><input type="text" class="field-input" placeholder="Supplier"></span></div>
+                <div class="field"><span class="field-label">DO/SJ No</span><span class="field-value"><input type="text" class="field-input" placeholder="DO/SJ No"></span></div>
+                <div class="field"><span class="field-label">Delivery Date</span><span class="field-value"><input type="date" class="field-input" placeholder="Tanggal"></span></div>
+                <div class="field"><span class="field-label">Time</span><span class="field-value"><input type="time" class="field-input" placeholder="Waktu"></span></div>
+                <div class="field"><span class="field-label">Qty DO/SJ</span><span class="field-value"><input type="text" class="field-input" placeholder="Qty DO/SJ"></span></div>
+                <div class="field"><span class="field-label">DO/SJ Unit</span><span class="field-value"><input type="text" class="field-input" placeholder="Masukkan Unit"></span></div>
+            </div>
+            <div class="right-col">
+                <div class="right-section">
+                    <div class="right-section-title title-warehouse">🏢 Warehouse</div>
+                    <div class="signature-area">
+                        <div class="signature-line"><label>Nama</label><input type="text" class="signature-input" placeholder="Nama penerima"></div>
+                        <div class="signature-line"><label>Jabatan</label><input type="text" class="signature-input" placeholder="Jabatan"></div>
+                        <button class="btn-ttd" onclick="openSignatureModal(this, 'warehouse')">✍️ Tanda Tangan</button>
+                        <div class="ttd-preview" id="preview-warehouse-${cardIndex}"><span class="ttd-empty">Belum ada tanda tangan</span></div>
+                        <div class="signature-date"><span>📅 Tanggal</span><input type="date" placeholder="Tgl"></div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <div class="right-section-title title-qc">🔬 QC Incoming</div>
+                        <div class="right-field"><span class="right-field-label">PIC</span><span class="right-field-value"><input type="text" class="field-input field-input-sm" placeholder="PIC QC"></span></div>
+                        <div class="right-field"><span class="right-field-label">Hasil</span><span class="right-field-value"><select class="field-select field-input-sm"><option value="" selected disabled>Pilih Hasil</option><option value="Lulus">Lulus</option><option value="Pending">Pending</option><option value="Tidak Lulus">Tidak Lulus</option><option value="Review">Review</option></select></span></div>
+                        <div class="right-field"><span class="right-field-label">Catatan</span><span class="right-field-value"><input type="text" class="field-input field-input-sm" placeholder="Catatan"></span></div>
+                        <button class="btn-ttd" onclick="openSignatureModal(this, 'qc')">✍️ TTD QC</button>
+                        <div class="ttd-preview" id="preview-qc-${cardIndex}"><span class="ttd-empty">Belum ada tanda tangan</span></div>
+                        <div class="signature-date" style="margin-top:4px;"><span>📅 Tanggal QC</span><input type="date" placeholder="Tgl QC"></div>
+                    </div>
+                </div>
+                <div class="right-section">
+                    <div>
+                        <div class="right-section-title title-keterangan">📝 Keterangan</div>
+                        <div class="sub-items-wrapper" id="subitems-${cardIndex}"></div>
+                        <button class="btn-add-subitem" onclick="addSubItem(this)">➕ Tambah Item</button>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <div class="right-section-title title-supply">📦 Supply</div>
+                        <div class="right-field"><span class="right-field-label">PIC</span><span class="right-field-value"><input type="text" class="field-input field-input-sm" placeholder="PIC Supply"></span></div>
+                        <div class="right-field"><span class="right-field-label">Ketersediaan</span><span class="right-field-value"><select class="field-select field-input-sm"><option value="" selected disabled>Pilih</option><option value="Ready">Ready</option><option value="Menunggu">Menunggu</option><option value="Kosong">Kosong</option><option value="Order">Order</option></select></span></div>
+                        <div class="right-field"><span class="right-field-label">Prioritas</span><span class="right-field-value"><select class="field-select field-input-sm"><option value="" selected disabled>Pilih</option><option value="Normal">Normal</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option><option value="Urgent">Urgent</option></select></span></div>
+                        <button class="btn-ttd" onclick="openSignatureModal(this, 'supply')">✍️ TTD Supply</button>
+                        <div class="ttd-preview" id="preview-supply-${cardIndex}"><span class="ttd-empty">Belum ada tanda tangan</span></div>
+                        <div class="signature-date" style="margin-top:4px;"><span>📅 Tanggal Supply</span><input type="date" placeholder="Tgl Supply"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    list.appendChild(newCard);
+    updateCardCount();
+    updateStats();
+    filterCards();
+    applyRoleRestrictions();
+    
+    setTimeout(() => {
+        newCard.querySelectorAll('.qty-sheet-input').forEach(el => calculatePcs(el));
+    }, 50);
+    
+    // Auto-sync ke GitHub
+    setTimeout(() => {
+        syncToGitHub();
+    }, 500);
+}
+
+// ============================================================
+// HAPUS KARTU
+// ============================================================
+function removeCard(btn) {
+    if (currentRole !== 'warehouse') {
+        alert('Hanya Warehouse yang dapat menghapus data!');
+        return;
+    }
+    
+    const card = btn.closest('.item-card');
+    const list = document.getElementById('verticalList');
+    if (list.querySelectorAll('.item-card').length > 1) {
+        card.remove();
+        updateCardCount();
+        updateStats();
+        filterCards();
+        
+        setTimeout(() => {
+            syncToGitHub();
+        }, 500);
+    } else {
+        alert('Minimal harus ada 1 kartu material.');
+    }
+}
+
+// ============================================================
+// TOGGLE KARTU
+// ============================================================
+function toggleCard(btn) {
+    const card = btn.closest('.item-card');
+    card.classList.toggle('hidden-card');
+    btn.classList.toggle('hidden');
+    updateStats();
+}
+
+function toggleAllCards() {
+    const cards = document.querySelectorAll('.item-card');
+    const allHidden = Array.from(cards).every(c => c.classList.contains('hidden-card') || c.classList.contains('filtered-out'));
+
+    if (allHidden) {
+        cards.forEach(card => {
+            card.classList.remove('hidden-card');
+            const btn = card.querySelector('.btn-toggle-card');
+            if (btn) {
+                btn.classList.remove('hidden');
+            }
+        });
+        document.getElementById('toggleAllBtn').textContent = 'Tampilkan Semua';
+    } else {
+        cards.forEach(card => {
+            if (!card.classList.contains('filtered-out')) {
+                card.classList.add('hidden-card');
+                const btn = card.querySelector('.btn-toggle-card');
+                if (btn) {
+                    btn.classList.add('hidden');
+                }
+            }
+        });
+        document.getElementById('toggleAllBtn').textContent = 'Sembunyikan Semua';
+    }
+    updateStats();
+}
+
+// ============================================================
+// FUNGSI PENCARIAN
+// ============================================================
+function filterCards() {
+    const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
+    const cards = document.querySelectorAll('.item-card');
+    const clearBtn = document.getElementById('clearSearchBtn');
+    let visible = 0;
+
+    cards.forEach(card => {
+        const piInput = card.querySelector('.pi-input');
+        const piValue = piInput ? piInput.value.toLowerCase() : '';
+        const isHidden = card.classList.contains('hidden-card');
+
+        if (searchTerm === '') {
+            card.classList.remove('filtered-out');
+            clearBtn.classList.remove('visible');
+            if (!isHidden) visible++;
+        } else {
+            clearBtn.classList.add('visible');
+            if (piValue.includes(searchTerm)) {
+                card.classList.remove('filtered-out');
+                if (!isHidden) visible++;
+            } else {
+                card.classList.add('filtered-out');
+            }
+        }
+    });
+
+    document.getElementById('visibleCount').textContent = visible;
+    document.getElementById('totalCount').textContent = cards.length;
+}
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('clearSearchBtn').classList.remove('visible');
+    filterCards();
+    document.getElementById('searchInput').focus();
+}
+
+function updateStats() {
+    const cards = document.querySelectorAll('.item-card');
+    const visible = document.querySelectorAll('.item-card:not(.hidden-card):not(.filtered-out)').length;
+    document.getElementById('visibleCount').textContent = visible;
+    document.getElementById('totalCount').textContent = cards.length;
+}
+
+function updateCardCount() {
+    const list = document.getElementById('verticalList');
+    const count = list.querySelectorAll('.item-card').length;
+    document.getElementById('cardCount').textContent = count;
+}
+
+// ============================================================
+// SHOW SYNC STATUS
+// ============================================================
+function showSyncStatus(type, message) {
+    const el = document.getElementById('syncStatus');
+    if (el) {
+        el.className = 'sync-status ' + type;
+        el.textContent = message;
+    }
+}
+
+// ============================================================
+// CANVAS TTD
+// ============================================================
+function initCanvas() {
+    canvas = document.getElementById('signatureCanvas');
+    ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#0f2a45';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', endDraw);
+    canvas.addEventListener('mouseleave', endDraw);
+
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+    canvas.addEventListener('touchcancel', handleTouchEnd, { passive: false });
+}
+
+function getCanvasPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+    };
+}
+
+function startDraw(e) {
+    isDrawing = true;
+    const pos = getCanvasPos(e);
+    lastX = pos.x;
+    lastY = pos.y;
+    ctx.beginPath();
+    ctx.moveTo(lastX, lastY);
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+    const pos = getCanvasPos(e);
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    lastX = pos.x;
+    lastY = pos.y;
+}
+
+function endDraw() {
+    isDrawing = false;
+}
+
+function handleTouchStart(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent('mousedown', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+    });
+    canvas.dispatchEvent(mouseEvent);
+}
+
+function handleTouchMove(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent('mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+    });
+    canvas.dispatchEvent(mouseEvent);
+}
+
+function handleTouchEnd(e) {
+    e.preventDefault();
+    const mouseEvent = new MouseEvent('mouseup', {});
+    canvas.dispatchEvent(mouseEvent);
+}
+
+// ============================================================
+// MODAL TTD
+// ============================================================
+function openSignatureModal(btn, type) {
+    if (type === 'warehouse' && currentRole !== 'warehouse') {
+        alert('Anda tidak memiliki akses!');
+        return;
+    }
+    if (type === 'qc' && !['qc', 'warehouse'].includes(currentRole)) {
+        alert('Anda tidak memiliki akses!');
+        return;
+    }
+    if (type === 'supply' && !['supply', 'warehouse'].includes(currentRole)) {
+        alert('Anda tidak memiliki akses!');
+        return;
+    }
+    
+    const card = btn.closest('.item-card');
+    const cardIndex = Array.from(document.querySelectorAll('.item-card')).indexOf(card);
+    const previewId = `preview-${type}-${cardIndex}`;
+
+    currentContext = { card, type, previewId };
+
+    const titles = {
+        warehouse: 'Tanda Tangan Warehouse',
+        qc: 'Tanda Tangan QC Incoming',
+        supply: 'Tanda Tangan Supply Material'
+    };
+    document.getElementById('modalTitle').textContent = titles[type] || 'Tanda Tangan';
+    document.getElementById('modalInfo').textContent = `Gambar tanda tangan untuk ${titles[type]}`;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    signatureData = null;
+
+    const preview = document.getElementById(previewId);
+    const existingImg = preview.querySelector('img');
+    if (existingImg) {
+        const img = new Image();
+        img.onload = function() {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            signatureData = canvas.toDataURL('image/png');
+        };
+        img.src = existingImg.src;
+    }
+
+    document.getElementById('signatureModal').classList.add('active');
+}
+
+function closeSignatureModal() {
+    document.getElementById('signatureModal').classList.remove('active');
+    currentContext = null;
+}
+
+function clearSignature() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    signatureData = null;
+}
+
+function saveSignature() {
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let isEmpty = true;
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+        if (data[i + 3] > 0) {
+            isEmpty = false;
+            break;
+        }
+    }
+
+    if (isEmpty) {
+        alert('Harap gambar tanda tangan terlebih dahulu!');
+        return;
+    }
+
+    signatureData = canvas.toDataURL('image/png');
+
+    if (currentContext) {
+        const preview = document.getElementById(currentContext.previewId);
+        preview.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = signatureData;
+        img.style.maxHeight = '35px';
+        img.style.maxWidth = '100px';
+        img.style.borderRadius = '4px';
+        img.style.background = 'white';
+        preview.appendChild(img);
+        
+        // Auto-sync setelah tanda tangan
+        setTimeout(() => {
+            syncToGitHub();
+        }, 500);
+    }
+
+    closeSignatureModal();
+}
+
+// ============================================================
+// TUTUP MODAL DENGAN ESC
+// ============================================================
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeSignatureModal();
+    }
+});
+
+document.getElementById('signatureModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeSignatureModal();
+    }
+});
+
+// ============================================================
+// START
+// ============================================================
+// Tampilkan splash, lalu login
+document.addEventListener('DOMContentLoaded', function() {
+    showSplash();
+});
+</script>
+</body>
+</html>
